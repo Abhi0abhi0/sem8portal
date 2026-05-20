@@ -23,14 +23,16 @@ app.use(session({
   cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }
 }));
 
-// ── DB Pool ───────────────────────────────────────────────
+// ── DB Pool (SSL for Aiven) ───────────────────────────────
 const db = mysql.createPool({
   host:             process.env.DB_HOST     || 'localhost',
   user:             process.env.DB_USER     || 'root',
   password:         process.env.DB_PASSWORD || '',
   database:         process.env.DB_NAME     || 'sem8portal',
+  port:             process.env.DB_PORT     || 3306,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit:  10,
+  ssl: process.env.DB_HOST?.includes('aivencloud') ? { rejectUnauthorized: false } : false,
 });
 
 // ── Multer ────────────────────────────────────────────────
@@ -149,13 +151,11 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
-// All subjects (for dropdowns)
 app.get('/api/admin/subjects', requireAdmin, async (req, res) => {
   const [rows] = await db.query('SELECT * FROM subjects ORDER BY sort_order');
   res.json(rows);
 });
 
-// Add subject
 app.post('/api/admin/subjects', requireAdmin, async (req, res) => {
   const { subject_code, subject_name, subject_type, credits, description } = req.body;
   if (!subject_code || !subject_name) return res.status(400).json({ error: 'Code and name required' });
@@ -166,9 +166,7 @@ app.post('/api/admin/subjects', requireAdmin, async (req, res) => {
   res.json({ success: true, id: r.insertId });
 });
 
-// Delete subject
 app.delete('/api/admin/subjects/:id', requireAdmin, async (req, res) => {
-  // Also delete files
   const [pdfs] = await db.query('SELECT filename FROM pdfs WHERE subject_id=?', [req.params.id]);
   pdfs.forEach(p => {
     const fp = path.join(__dirname, 'uploads', p.filename);
@@ -178,7 +176,6 @@ app.delete('/api/admin/subjects/:id', requireAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-// Upload PDF
 app.post('/api/admin/pdfs/upload', requireAdmin, upload.single('pdf'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No PDF uploaded' });
   const { subject_id, title, description, category } = req.body;
@@ -190,7 +187,6 @@ app.post('/api/admin/pdfs/upload', requireAdmin, upload.single('pdf'), async (re
   res.json({ success: true, id: r.insertId });
 });
 
-// Delete PDF
 app.delete('/api/admin/pdfs/:id', requireAdmin, async (req, res) => {
   const [rows] = await db.query('SELECT * FROM pdfs WHERE id=?', [req.params.id]);
   if (!rows[0]) return res.status(404).json({ error: 'Not found' });
@@ -200,7 +196,6 @@ app.delete('/api/admin/pdfs/:id', requireAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-// All PDFs
 app.get('/api/admin/pdfs', requireAdmin, async (req, res) => {
   const [rows] = await db.query(
     `SELECT p.*,s.subject_code,s.subject_name FROM pdfs p
@@ -209,7 +204,6 @@ app.get('/api/admin/pdfs', requireAdmin, async (req, res) => {
   res.json(rows);
 });
 
-// Users list
 app.get('/api/admin/users', requireAdmin, async (req, res) => {
   const [rows] = await db.query('SELECT * FROM users ORDER BY created_at DESC');
   res.json(rows);
