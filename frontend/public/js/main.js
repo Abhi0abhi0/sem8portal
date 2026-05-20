@@ -88,7 +88,6 @@ let currentPdfCat = 'all';
       if (p.y < 0 || p.y > H) p.vy *= -1;
     });
 
-    // Draw lines between nearby particles
     for (let i = 0; i < particles.length; i++) {
       for (let j = i + 1; j < particles.length; j++) {
         const dx = particles[i].x - particles[j].x;
@@ -119,6 +118,16 @@ async function init() {
   } else {
     showPage('page-landing');
   }
+
+  // Browser back button support
+  window.addEventListener('popstate', function(e) {
+    if (e.state?.section === 'home') {
+      currentSubjectId = null;
+      loadSubjects();
+    } else if (e.state?.section === 'subject') {
+      openSubject(e.state.id);
+    }
+  });
 }
 
 function setUser(user) {
@@ -134,6 +143,7 @@ function showPage(id) {
 
 function showApp() {
   showPage('page-app');
+  history.replaceState({ section: 'home' }, '', '/');
   loadSubjects();
 }
 
@@ -168,6 +178,9 @@ async function doLogin() {
 
 async function doLogout() {
   await fetch('/api/auth/logout', { method: 'POST' });
+  localStorage.removeItem('user_name');
+  localStorage.removeItem('user_college');
+  history.replaceState(null, '', '/');
   showPage('page-landing');
   document.getElementById('inp-name').value = '';
   document.getElementById('inp-college').value = '';
@@ -247,6 +260,7 @@ function renderSubjects(filter) {
 
 // ── Subject Detail ────────────────────────────────────────────────
 async function openSubject(id) {
+  history.pushState({ section: 'subject', id }, '', `?subject=${id}`);
   currentSubjectId = id;
   currentPdfCat = 'all';
   document.querySelectorAll('.pcat').forEach(b => b.classList.toggle('active', b.dataset.cat === 'all'));
@@ -272,7 +286,6 @@ async function openSubject(id) {
   badge.textContent = typeLabel[subj.subject_type];
   badge.className = `subj-badge card-type-badge ${typeCls[subj.subject_type]}`;
 
-  // Load PDFs
   const pdfGrid = document.getElementById('pdf-grid');
   pdfGrid.innerHTML = Array(3).fill(0).map(() =>
     `<div class="pdf-row"><div class="skel" style="height:70px;flex:1;border-radius:8px"></div></div>`
@@ -362,6 +375,7 @@ function setBreadcrumb(items) {
 }
 
 function goHome() {
+  history.pushState({ section: 'home' }, '', '/');
   currentSubjectId = null;
   loadSubjects();
 }
