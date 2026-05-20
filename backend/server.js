@@ -1,14 +1,22 @@
 require('dotenv').config();
-const express = require('express');
-const mysql   = require('mysql2/promise');
-const session = require('express-session');
-const multer  = require('multer');
-const path    = require('path');
-const fs      = require('fs');
-const cors    = require('cors');
+const express    = require('express');
+const mysql      = require('mysql2/promise');
+const session    = require('express-session');
+const multer     = require('multer');
+const cloudinary = require('cloudinary').v2;
+const path       = require('path');
+const fs         = require('fs');
+const cors       = require('cors');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
+
+// ── Cloudinary Config ─────────────────────────────────────
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // ── Middleware ────────────────────────────────────────────
 app.use(cors());
@@ -23,7 +31,7 @@ app.use(session({
   cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }
 }));
 
-// ── DB Pool (SSL for Aiven) ───────────────────────────────
+// ── DB Pool ───────────────────────────────────────────────
 const db = mysql.createPool({
   host:             process.env.DB_HOST     || 'localhost',
   user:             process.env.DB_USER     || 'root',
@@ -35,20 +43,9 @@ const db = mysql.createPool({
   ssl: process.env.DB_HOST?.includes('aivencloud') ? { rejectUnauthorized: false } : false,
 });
 
-// ── Multer ────────────────────────────────────────────────
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.join(__dirname, 'uploads');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const uid = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uid + path.extname(file.originalname));
-  }
-});
+// ── Multer (temp storage) ─────────────────────────────────
 const upload = multer({
-  storage,
+  dest: '/tmp/uploads/',
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/pdf') cb(null, true);
     else cb(new Error('PDF only'), false);
@@ -110,32 +107,24 @@ app.get('/api/subjects/:id', requireUser, async (req, res) => {
 
 app.get('/api/subjects/:id/pdfs', requireUser, async (req, res) => {
   const [rows] = await db.query(
-    'SELECT id,title,description,category,original_name,file_size,uploaded_at FROM pdfs WHERE subject_id=? ORDER BY category,uploaded_at DESC',
+    'SELECT id,title,description,category,original_name,file_size,uploaded_at,cloudinary_url FROM pdfs WHERE subject_id=? ORDER BY category,uploaded_at DESC',
     [req.params.id]
   );
   res.json(rows);
 });
 
+// View PDF (redirect to Cloudinary URL)
 app.get('/api/pdfs/:id/download', requireUser, async (req, res) => {
   const [rows] = await db.query('SELECT * FROM pdfs WHERE id=?', [req.params.id]);
   if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-  const p = rows[0];
-  const fp = path.join(__dirname, 'uploads', p.filename);
-  if (!fs.existsSync(fp)) return res.status(404).json({ error: 'File missing' });
-  res.setHeader('Content-Disposition', `inline; filename="${p.original_name}"`);
-  res.setHeader('Content-Type', 'application/pdf');
-  res.sendFile(fp);
+  res.redirect(rows[0].cloudinary_url);
 });
 
+// Download PDF
 app.get('/api/pdfs/:id/dl', requireUser, async (req, res) => {
   const [rows] = await db.query('SELECT * FROM pdfs WHERE id=?', [req.params.id]);
   if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-  const p = rows[0];
-  const fp = path.join(__dirname, 'uploads', p.filename);
-  if (!fs.existsSync(fp)) return res.status(404).json({ error: 'File missing' });
-  res.setHeader('Content-Disposition', `attachment; filename="${p.original_name}"`);
-  res.setHeader('Content-Type', 'application/pdf');
-  res.sendFile(fp);
+  res.redirect(rows[0].cloudinary_url);
 });
 
 // ════════════════════════════════════════════════════════
@@ -167,31 +156,53 @@ app.post('/api/admin/subjects', requireAdmin, async (req, res) => {
 });
 
 app.delete('/api/admin/subjects/:id', requireAdmin, async (req, res) => {
-  const [pdfs] = await db.query('SELECT filename FROM pdfs WHERE subject_id=?', [req.params.id]);
-  pdfs.forEach(p => {
-    const fp = path.join(__dirname, 'uploads', p.filename);
-    if (fs.existsSync(fp)) fs.unlinkSync(fp);
-  });
+  // Delete from cloudinary too
+  const [pdfs] = await db.query('SELECT cloudinary_id FROM pdfs WHERE subject_id=?', [req.params.id]);
+  for (const p of pdfs) {
+    if (p.cloudinary_id) await cloudinary.uploader.destroy(p.cloudinary_id, { resource_type: 'raw' }).catch(() => {});
+  }
   await db.query('DELETE FROM subjects WHERE id=?', [req.params.id]);
   res.json({ success: true });
 });
 
+// Upload PDF to Cloudinary
 app.post('/api/admin/pdfs/upload', requireAdmin, upload.single('pdf'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No PDF uploaded' });
   const { subject_id, title, description, category } = req.body;
   if (!subject_id || !title) return res.status(400).json({ error: 'Subject and title required' });
-  const [r] = await db.query(
-    'INSERT INTO pdfs (subject_id,title,description,category,filename,original_name,file_size) VALUES (?,?,?,?,?,?,?)',
-    [subject_id, title, description||'', category||'imp', req.file.filename, req.file.originalname, req.file.size]
-  );
-  res.json({ success: true, id: r.insertId });
+
+  try {
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: 'raw',
+      folder: 'sem8portal',
+      public_id: `${Date.now()}_${req.file.originalname.replace(/\s/g, '_')}`,
+    });
+
+    // Delete temp file
+    fs.unlinkSync(req.file.path);
+
+    // Save to DB
+    const [r] = await db.query(
+      'INSERT INTO pdfs (subject_id,title,description,category,filename,original_name,file_size,cloudinary_url,cloudinary_id) VALUES (?,?,?,?,?,?,?,?,?)',
+      [subject_id, title, description||'', category||'imp', result.public_id, req.file.originalname, req.file.size, result.secure_url, result.public_id]
+    );
+    res.json({ success: true, id: r.insertId });
+  } catch (e) {
+    console.error(e);
+    if (req.file?.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    res.status(500).json({ error: 'Upload failed: ' + e.message });
+  }
 });
 
+// Delete PDF
 app.delete('/api/admin/pdfs/:id', requireAdmin, async (req, res) => {
   const [rows] = await db.query('SELECT * FROM pdfs WHERE id=?', [req.params.id]);
   if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-  const fp = path.join(__dirname, 'uploads', rows[0].filename);
-  if (fs.existsSync(fp)) fs.unlinkSync(fp);
+  // Delete from Cloudinary
+  if (rows[0].cloudinary_id) {
+    await cloudinary.uploader.destroy(rows[0].cloudinary_id, { resource_type: 'raw' }).catch(() => {});
+  }
   await db.query('DELETE FROM pdfs WHERE id=?', [req.params.id]);
   res.json({ success: true });
 });
