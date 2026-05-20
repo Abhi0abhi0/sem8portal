@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin – SemVault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/main.css"/>
+<link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body>
+
+<!-- Admin Login -->
+<div id="page-admin-login" class="page active">
+  <div class="landing-scene">
+    <div class="noise-overlay"></div>
+  </div>
+  <div class="landing-wrap">
+    <header class="landing-header">
+      <div class="logo-mark">
+        <span class="logo-circle">🔐</span>
+        <div>
+          <div class="logo-title">ADMIN<em>PANEL</em></div>
+          <div class="logo-sub">SemVault · RGPV CS 8th Sem</div>
+        </div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="theme-icon">☀</span></button>
+    </header>
+    <div class="login-panel" style="max-width:440px">
+      <div class="login-panel-inner">
+        <div class="panel-label">ADMIN ACCESS</div>
+        <div class="field" style="margin-bottom:16px">
+          <label>Admin Password</label>
+          <input type="password" id="admin-pass" placeholder="Enter password" onkeydown="if(event.key==='Enter')adminLogin()"/>
+        </div>
+        <button class="cta-btn" onclick="adminLogin()" style="width:100%;justify-content:center">Login</button>
+        <p id="admin-err" class="err-text"></p>
+      </div>
+    </div>
+    <a href="/" style="color:var(--text-3);font-size:0.82rem;text-decoration:none;margin-top:16px">← Back to Student Portal</a>
+  </div>
+</div>
+
+<!-- Admin Dashboard -->
+<div id="page-admin-dash" class="page">
+
+  <nav class="appnav">
+    <div class="appnav-left">
+      <div class="logo-mark small">
+        <span class="logo-circle">🔐</span>
+        <div class="logo-title">ADMIN<em>PANEL</em></div>
+      </div>
+    </div>
+    <div class="appnav-right" style="gap:10px">
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="theme-icon">☀</span></button>
+      <a href="/" class="logout-btn" title="Student Portal" style="display:flex;align-items:center;justify-content:center;text-decoration:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      </a>
+      <button class="logout-btn" onclick="adminLogout()" title="Logout">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <button class="sidebtn active" onclick="switchTab('upload',this)">📤 Upload PDF</button>
+      <button class="sidebtn" onclick="switchTab('pdfs',this)">📄 All PDFs</button>
+      <button class="sidebtn" onclick="switchTab('subjects',this)">📚 Subjects</button>
+      <button class="sidebtn" onclick="switchTab('users',this)">👥 Users</button>
+    </aside>
+
+    <div class="admin-content">
+
+      <!-- Upload Tab -->
+      <div id="tab-upload" class="atab active">
+        <div class="acard">
+          <h2>Upload Study Material</h2>
+          <p class="acard-sub">Upload PDFs for any subject — IMPs, notes, syllabus, previous year papers</p>
+
+          <div class="aform-grid">
+            <div class="afield">
+              <label>Subject *</label>
+              <select id="up-subject" class="aselect"><option value="">Loading...</option></select>
+            </div>
+            <div class="afield">
+              <label>Category *</label>
+              <select id="up-category" class="aselect">
+                <option value="imp">⭐ IMP Questions</option>
+                <option value="syllabus">📋 Syllabus</option>
+                <option value="notes">📝 Notes</option>
+                <option value="previous_year">📅 Previous Year Paper</option>
+                <option value="other">📄 Other</option>
+              </select>
+            </div>
+            <div class="afield afield-full">
+              <label>Title *</label>
+              <input type="text" id="up-title" class="ainput" placeholder="e.g. Unit 1-3 IMP Questions 2024"/>
+            </div>
+            <div class="afield afield-full">
+              <label>Description</label>
+              <input type="text" id="up-desc" class="ainput" placeholder="e.g. Based on 2022-23 pattern with answers"/>
+            </div>
+          </div>
+
+          <div class="drop-zone" id="drop-zone" onclick="document.getElementById('pdf-file').click()">
+            <div class="dz-icon">📁</div>
+            <div class="dz-text">Click to browse or drag & drop PDF here</div>
+            <div class="dz-sub" id="dz-filename">PDF only · Max 50MB</div>
+          </div>
+          <input type="file" id="pdf-file" accept=".pdf" class="hidden" onchange="fileChosen(this)"/>
+
+          <div class="upload-progress hidden" id="upload-prog">
+            <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+            <span id="prog-label">Uploading...</span>
+          </div>
+
+          <button class="cta-btn" onclick="uploadPdf()" style="width:auto;margin-top:4px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+            Upload PDF
+          </button>
+          <p id="up-msg" class="up-msg"></p>
+        </div>
+      </div>
+
+      <!-- All PDFs Tab -->
+      <div id="tab-pdfs" class="atab">
+        <div class="acard">
+          <div class="acard-head">
+            <div><h2>All Uploaded PDFs</h2><p class="acard-sub">Manage all study materials</p></div>
+            <select id="filter-subj" class="aselect" style="width:220px" onchange="loadAllPdfs()">
+              <option value="">All Subjects</option>
+            </select>
+          </div>
+          <div id="all-pdfs"></div>
+        </div>
+      </div>
+
+      <!-- Subjects Tab -->
+      <div id="tab-subjects" class="atab">
+        <div class="acard" style="margin-bottom:16px">
+          <h2>Add New Subject</h2>
+          <div class="aform-grid">
+            <div class="afield">
+              <label>Code *</label>
+              <input type="text" id="ns-code" class="ainput" placeholder="CS801"/>
+            </div>
+            <div class="afield">
+              <label>Type *</label>
+              <select id="ns-type" class="aselect">
+                <option value="core">Core</option>
+                <option value="dept_elective">Dept. Elective</option>
+                <option value="open_elective">Open Elective</option>
+              </select>
+            </div>
+            <div class="afield">
+              <label>Credits</label>
+              <input type="number" id="ns-credits" class="ainput" value="3" min="1" max="6"/>
+            </div>
+            <div class="afield afield-full">
+              <label>Name *</label>
+              <input type="text" id="ns-name" class="ainput" placeholder="e.g. Data Science"/>
+            </div>
+            <div class="afield afield-full">
+              <label>Description</label>
+              <input type="text" id="ns-desc" class="ainput" placeholder="Brief overview of the subject"/>
+            </div>
+          </div>
+          <button class="cta-btn" onclick="addSubject()" style="width:auto;margin-top:4px">Add Subject</button>
+          <p id="ns-msg" class="up-msg"></p>
+        </div>
+        <div class="acard">
+          <h2>All Subjects</h2>
+          <div id="subj-table"></div>
+        </div>
+      </div>
+
+      <!-- Users Tab -->
+      <div id="tab-users" class="atab">
+        <div class="acard">
+          <h2>Registered Students</h2>
+          <div id="users-table"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="js/admin.js"></script>
+</body>
+</html>

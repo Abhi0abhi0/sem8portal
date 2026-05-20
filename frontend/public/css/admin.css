@@ -1,0 +1,145 @@
+/* ── Admin Layout ─────────────────────────────────────────── */
+.admin-layout {
+  display: flex;
+  min-height: calc(100vh - 60px);
+}
+
+.admin-sidebar {
+  width: 210px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 16px 10px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.sidebtn {
+  display: flex; align-items: center; gap: 10px;
+  background: transparent; border: none;
+  color: var(--text-2); padding: 11px 14px;
+  border-radius: 10px; cursor: pointer; width: 100%;
+  font-family: 'Cabinet Grotesk', sans-serif;
+  font-size: 0.88rem; font-weight: 600; text-align: left;
+  transition: all 0.18s;
+}
+.sidebtn:hover { background: var(--surface2); color: var(--text); }
+.sidebtn.active { background: var(--accent-glow); color: var(--accent); }
+
+.admin-content {
+  flex: 1; overflow-y: auto;
+  padding: 32px 28px; max-width: 860px;
+}
+
+.atab { display: none; animation: fadeUp 0.3s ease both; }
+.atab.active { display: block; }
+
+/* ── Admin Cards ──────────────────────────────────────────── */
+.acard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px;
+  margin-bottom: 16px;
+}
+.acard h2 {
+  font-size: 1.25rem; font-weight: 900;
+  letter-spacing: -0.02em; margin-bottom: 4px;
+}
+.acard-sub { color: var(--text-2); font-size: 0.85rem; margin-bottom: 22px; }
+.acard-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.acard-head > div .acard-sub { margin-bottom: 0; }
+
+/* ── Form Elements ────────────────────────────────────────── */
+.aform-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px; margin-bottom: 20px;
+}
+.afield { display: flex; flex-direction: column; gap: 7px; }
+.afield-full { grid-column: 1 / -1; }
+.afield label {
+  font-size: 0.78rem; font-weight: 700; color: var(--text-2);
+  letter-spacing: 0.03em;
+}
+.ainput, .aselect {
+  background: var(--bg);
+  border: 1px solid var(--border2); border-radius: 10px;
+  padding: 11px 14px; color: var(--text);
+  font-family: 'Cabinet Grotesk', sans-serif; font-size: 0.9rem;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+.ainput::placeholder { color: var(--text-3); }
+.ainput:focus, .aselect:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+/* ── Drop Zone ────────────────────────────────────────────── */
+.drop-zone {
+  border: 2px dashed var(--border2); border-radius: 14px;
+  padding: 40px 24px; text-align: center; cursor: pointer;
+  background: var(--bg); transition: all 0.2s; margin-bottom: 20px;
+}
+.drop-zone:hover, .drop-zone.over { border-color: var(--accent); background: var(--accent-glow); }
+.dz-icon { font-size: 2.4rem; margin-bottom: 10px; }
+.dz-text { font-weight: 700; margin-bottom: 6px; }
+.dz-sub  { font-size: 0.82rem; color: var(--text-3); }
+
+/* ── Progress ─────────────────────────────────────────────── */
+.upload-progress {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 16px;
+}
+.upload-progress.hidden { display: none; }
+.prog-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.prog-fill  { height: 100%; width: 0; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--green)); transition: width 0.3s; }
+#prog-label { font-size: 0.8rem; color: var(--text-2); white-space: nowrap; }
+
+.up-msg { margin-top: 10px; font-size: 0.85rem; }
+.up-msg.ok  { color: var(--green); }
+.up-msg.err { color: var(--red); }
+
+/* ── Data Tables ──────────────────────────────────────────── */
+.atable {
+  width: 100%; border-collapse: collapse;
+  font-size: 0.88rem; margin-top: 12px;
+}
+.atable th {
+  text-align: left; padding: 9px 12px;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-3);
+  border-bottom: 1px solid var(--border);
+}
+.atable td {
+  padding: 12px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.atable tr:last-child td { border-bottom: none; }
+.atable tr:hover td { background: var(--surface2); }
+
+.abadge {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 3px 9px; border-radius: 6px;
+}
+.abadge-core  { background: rgba(62,207,142,0.12); color: var(--green); }
+.abadge-dept  { background: rgba(240,160,80,0.12); color: var(--accent2); }
+.abadge-open  { background: rgba(91,106,245,0.12); color: var(--accent); }
+.abadge-imp   { background: rgba(240,160,80,0.12); color: var(--accent2); }
+.abadge-syl   { background: rgba(62,207,142,0.12); color: var(--green); }
+.abadge-note  { background: rgba(91,106,245,0.12); color: var(--accent); }
+.abadge-prev  { background: rgba(168,85,247,0.12); color: #a855f7; }
+.abadge-oth   { background: var(--surface2); color: var(--text-3); }
+
+.del-btn {
+  background: rgba(242,108,108,0.1); color: var(--red);
+  border: 1px solid rgba(242,108,108,0.2); border-radius: 8px;
+  padding: 5px 12px; font-size: 0.78rem; font-weight: 700;
+  cursor: pointer; font-family: 'Cabinet Grotesk', sans-serif;
+  transition: all 0.2s;
+}
+.del-btn:hover { background: rgba(242,108,108,0.2); }
+
+.aempty { color: var(--text-3); padding: 24px 0; font-size: 0.9rem; }
+
+@media (max-width: 768px) {
+  .admin-sidebar { display: none; }
+  .admin-content { padding: 16px; }
+  .aform-grid { grid-template-columns: 1fr; }
+}

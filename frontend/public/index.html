@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sem 8 Portal – RGPV CS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/main.css"/>
+</head>
+<body>
+
+<!-- ══ LANDING ═══════════════════════════════════════════ -->
+<div id="page-landing" class="page active">
+  <div class="landing-scene">
+    <canvas id="particle-canvas"></canvas>
+    <div class="noise-overlay"></div>
+  </div>
+
+  <div class="landing-wrap">
+    <header class="landing-header">
+      <div class="logo-mark">
+        <span class="logo-circle">8</span>
+        <div>
+          <div class="logo-title">SEM<em>VAULT</em></div>
+          <div class="logo-sub">RGPV · CS · 8th Semester</div>
+        </div>
+      </div>
+      <button class="theme-toggle" id="theme-btn-landing" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span class="theme-icon">☀</span>
+      </button>
+    </header>
+
+    <div class="hero-block">
+      <div class="hero-eyebrow">Computer Science Engineering</div>
+      <h1 class="hero-h1">Your Complete<br/><span class="gradient-text">8th Semester</span><br/>Study Hub</h1>
+      <p class="hero-p">IMPs · Notes · Syllabus · Previous Years<br/>All subjects. Zero friction.</p>
+    </div>
+
+    <div class="login-panel">
+      <div class="login-panel-inner">
+        <div class="panel-label">ENTER DETAILS TO CONTINUE</div>
+        <div class="input-row">
+          <div class="field">
+            <label>Your Name</label>
+            <input type="text" id="inp-name" placeholder="Rahul Sharma" autocomplete="name"/>
+          </div>
+          <div class="field">
+            <label>College</label>
+            <input type="text" id="inp-college" placeholder="SGSITS Indore" autocomplete="organization"/>
+          </div>
+          <button class="cta-btn" onclick="doLogin()">
+            Enter Portal
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+        <p id="login-err" class="err-text"></p>
+      </div>
+    </div>
+
+    <div class="subject-count-bar">
+      <div class="count-item"><span class="count-num">9</span><span class="count-label">Subjects</span></div>
+      <div class="count-div"></div>
+      <div class="count-item"><span class="count-num">3</span><span class="count-label">Categories</span></div>
+      <div class="count-div"></div>
+      <div class="count-item"><span class="count-num">∞</span><span class="count-label">Resources</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ════════════════════════════════════════════════ -->
+<div id="page-app" class="page">
+
+  <!-- Navbar -->
+  <nav class="appnav">
+    <div class="appnav-left">
+      <div class="logo-mark small">
+        <span class="logo-circle">8</span>
+        <div class="logo-title">SEM<em>VAULT</em></div>
+      </div>
+    </div>
+    <div class="appnav-center" id="breadcrumb">
+      <span class="bc active" data-action="home">Home</span>
+    </div>
+    <div class="appnav-right">
+      <button class="theme-toggle" id="theme-btn-app" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span class="theme-icon">☀</span>
+      </button>
+      <div class="user-pill">
+        <div class="user-av" id="user-av">R</div>
+        <div class="user-text">
+          <div id="user-name-nav">Rahul</div>
+          <div id="user-college-nav" class="user-college">SGSITS</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Content sections -->
+  <main id="app-main">
+
+    <!-- Home: Subject Cards -->
+    <section id="sec-home" class="app-section">
+      <div class="sec-head">
+        <h2>8th Semester Subjects</h2>
+        <p>RGPV · CS Engineering · New Scheme (AICTE)</p>
+      </div>
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="ftab active" data-filter="all">All</button>
+        <button class="ftab" data-filter="core">Core</button>
+        <button class="ftab" data-filter="dept_elective">Dept. Elective</button>
+        <button class="ftab" data-filter="open_elective">Open Elective</button>
+      </div>
+      <div class="subjects-grid" id="subjects-grid"></div>
+    </section>
+
+    <!-- Subject Detail -->
+    <section id="sec-subject" class="app-section hidden">
+      <div class="subject-hero" id="subj-hero">
+        <div class="subj-hero-code" id="subj-code">CS801</div>
+        <h2 id="subj-name">Internet of Things</h2>
+        <p id="subj-desc">Description here</p>
+        <div class="subj-meta">
+          <span class="subj-badge" id="subj-type-badge">Core</span>
+          <span class="subj-credits" id="subj-credits">4 Credits</span>
+        </div>
+      </div>
+
+      <div class="pdf-category-tabs" id="pdf-cat-tabs">
+        <button class="pcat active" data-cat="all">All Files</button>
+        <button class="pcat" data-cat="syllabus">📋 Syllabus</button>
+        <button class="pcat" data-cat="imp">⭐ IMPs</button>
+        <button class="pcat" data-cat="notes">📝 Notes</button>
+        <button class="pcat" data-cat="previous_year">📅 Previous Year</button>
+      </div>
+
+      <div id="pdf-grid" class="pdf-grid"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ══ PDF VIEWER ═════════════════════════════════════════ -->
+<div id="pdf-overlay" class="pdf-overlay hidden">
+  <div class="pdf-viewer-box">
+    <div class="pvb-header">
+      <div class="pvb-title" id="pvb-title">PDF Title</div>
+      <div class="pvb-actions">
+        <a id="pvb-download" href="#" class="pvb-btn download" download>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        </a>
+        <button class="pvb-btn close" onclick="closePdf()">✕ Close</button>
+      </div>
+    </div>
+    <iframe id="pdf-frame" src="" class="pdf-frame"></iframe>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="js/main.js"></script>
+</body>
+</html>
