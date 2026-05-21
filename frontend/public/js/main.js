@@ -334,16 +334,7 @@ function esc(str) { return (str || '').replace(/'/g, "\\'"); }
 
 // ── PDF Viewer ────────────────────────────────────────────────────
 function viewPdf(id, title) {
-  const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-  if (isMobile) {
-    window.open(`/api/pdfs/${id}/download`, '_blank');
-    return;
-  }
-  document.getElementById('pvb-title').textContent = title;
-  document.getElementById('pdf-frame').src = `/api/pdfs/${id}/download`;
-  document.getElementById('pvb-download').href = `/api/pdfs/${id}/dl`;
-  document.getElementById('pdf-overlay').classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
+  window.open(`/api/pdfs/${id}/download`, '_blank');
 }
 
 function closePdf() {
