@@ -172,6 +172,9 @@ app.post('/api/admin/pdfs/upload', requireAdmin, upload.single('pdf'), async (re
   if (!subject_id || !title) return res.status(400).json({ error: 'Subject and title required' });
 
   try {
+    console.log('=== CLOUDINARY UPLOAD START ===');
+    console.log('File path:', req.file.path);
+    console.log('Cloud name:', process.env.CLOUDINARY_CLOUD_NAME);
     // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(req.file.path, {
       resource_type: 'raw',
@@ -190,6 +193,8 @@ app.post('/api/admin/pdfs/upload', requireAdmin, upload.single('pdf'), async (re
     res.json({ success: true, id: r.insertId });
   } catch (e) {
     console.error(e);
+    console.error('=== CLOUDINARY ERROR ===', e.message);
+    console.error('Full error:', JSON.stringify(e));
     if (req.file?.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     res.status(500).json({ error: 'Upload failed: ' + e.message });
   }
